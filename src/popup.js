@@ -109,6 +109,48 @@ function renderError(msg) {
 }
 
 function renderResult(t, isSaved) {
+  // 整句翻译：只显示原文和译文，不出词典字段
+  if (t.kind === 'sentence') {
+    content.innerHTML = `
+      <div class="c-body">
+        <p class="src-line">${esc(t.source)}</p>
+        <p class="zh-line">${esc(t.sentence_zh)}</p>
+      </div>
+      <div class="c-foot">
+        <div class="foot-left">
+          <button class="icon-btn" id="btnSpeakSrc" title="朗读原文">
+            <svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4V5zM16 9a4 4 0 010 6"/></svg>
+          </button>
+          <button class="icon-btn" id="btnCopyZh" title="复制译文">
+            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h8"/></svg>
+          </button>
+          <button class="icon-btn" id="btnRetranslate" title="重新翻译">
+            <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg>
+          </button>
+        </div>
+      </div>`;
+
+    el('btnSpeakSrc').onclick = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(t.source);
+        u.lang = 'en-US';
+        u.rate = 0.95;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    };
+    el('btnCopyZh').onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(t.sentence_zh);
+        toastCopy('已复制');
+      } catch (_) {
+        toastCopy('复制失败');
+      }
+    };
+    el('btnRetranslate').onclick = () => runTranslate();
+    return;
+  }
+
   const collocations = (t.collocations || [])
     .filter((c) => c.en)
     .map((c) => `<li><b>${esc(c.en)}</b><span>${esc(c.zh)}</span></li>`)

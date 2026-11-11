@@ -87,6 +87,19 @@ let tError = '';
 let tSaved = false;
 
 function tCardHTML(t, saved) {
+  // 整句翻译
+  if (t.kind === 'sentence') {
+    return `
+      <div class="tcard fade-in">
+        <p class="src-line">${esc(t.source)}</p>
+        <p class="zh-line">${esc(t.sentence_zh)}</p>
+        <div class="tcard-foot">
+          <button class="btn-ghost" id="tSpeakSrc">朗读原文</button>
+          <button class="btn-ghost" id="tCopyZh">复制译文</button>
+        </div>
+      </div>`;
+  }
+
   const collocations = (t.collocations || [])
     .filter((c) => c.en)
     .map((c) => `<li><b>${esc(c.en)}</b><span>${esc(c.zh)}</span></li>`)
@@ -215,6 +228,34 @@ async function renderTranslate() {
         speechSynthesis.cancel();
         speechSynthesis.speak(u);
       } catch (_) {}
+    };
+  }
+
+  // 句子模式的两个按钮
+  const speakSrc = document.getElementById('tSpeakSrc');
+  if (speakSrc && tResult) {
+    speakSrc.onclick = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(tResult.source);
+        u.lang = 'en-US';
+        u.rate = 0.95;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    };
+  }
+
+  const copyZh = document.getElementById('tCopyZh');
+  if (copyZh && tResult) {
+    copyZh.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(tResult.sentence_zh);
+        copyZh.textContent = '已复制';
+        setTimeout(() => (copyZh.textContent = '复制译文'), 1400);
+      } catch (_) {
+        copyZh.textContent = '复制失败';
+        setTimeout(() => (copyZh.textContent = '复制译文'), 1400);
+      }
     };
   }
 }

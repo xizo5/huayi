@@ -19,8 +19,22 @@ pub struct Example {
 }
 
 /// 一次翻译的结构化结果，由 LLM 直接产出 JSON
+///
+/// 有两种形态，由 `kind` 区分：
+/// - `word`：词典式结果（词头、音标、释义、搭配、例句）
+/// - `sentence`：整句翻译（原文 + 译文）
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Translation {
+    /// "word" | "sentence"
+    #[serde(default)]
+    pub kind: String,
+    /// 句子模式下的原文
+    #[serde(default)]
+    pub source: String,
+    /// 句子模式下的整句译文
+    #[serde(default)]
+    pub sentence_zh: String,
+
     #[serde(default)]
     pub word: String,
     #[serde(default)]

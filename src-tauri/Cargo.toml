@@ -1,6 +1,6 @@
 [package]
 name = "huayi"
-version = "0.1.1"
+version = "0.1.2"
 description = "划词即译 - 英译中划词翻译与生词本"
 authors = ["you"]
 edition = "2021"
