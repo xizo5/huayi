@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>划译浮层</title>
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/popup.css" />
+</head>
+<body>
+  <!-- 按钮态：划词后先只露这一颗胶囊 -->
+  <div id="btnView">
+    <button class="pill" id="btnTranslate" title="翻译选中的内容">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 7h9.5L11 4.5M20 17h-9.5L13 19.5" />
+      </svg>
+      <span>翻译</span>
+    </button>
+  </div>
+
+  <!-- 卡片态 -->
+  <div class="card" id="card" hidden>
+    <div class="c-head">
+      <div class="lang">
+        <span class="pill2">英文</span>
+        <svg class="arw" viewBox="0 0 24 24"><path d="M4 12h15M14 7l5 5-5 5" /></svg>
+        <span class="pill2">中文（简体）</span>
+      </div>
+      <div class="c-tools">
+        <button class="icon-btn" id="btnClose" title="关闭">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flash" id="flash">
+      <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:var(--mint);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0">
+        <path d="M4 12.5l5 5L20 6.5" />
+      </svg>
+      <span>已加入生词表 · 今日待复习 <b id="dueCount">0</b></span>
+    </div>
+
+    <div id="cardContent"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

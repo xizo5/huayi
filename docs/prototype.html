@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>划词翻译 · 产品原型 v0.1</title>
+<style>
+:root{
+  --bg:#0A0C0F;
+  --surface:#101318;
+  --surface-2:#15191F;
+  --surface-3:#1C2129;
+  --line:#232932;
+  --line-2:#2E3641;
+  --text:#E6EAEF;
+  --text-2:#98A2B1;
+  --text-3:#6A7382;
+  --accent:#FF9A5A;
+  --accent-soft:rgba(255,154,90,.12);
+  --accent-line:rgba(255,154,90,.35);
+  --mint:#5EE0B0;
+  --mint-soft:rgba(94,224,176,.12);
+  --danger:#FF7A6B;
+  --danger-soft:rgba(255,122,107,.12);
+  --r-xs:6px; --r-sm:8px; --r-md:10px; --r-lg:14px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Display","Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI",sans-serif;
+  --mono:"JetBrains Mono","Cascadia Mono","Cascadia Code",Consolas,ui-monospace,monospace;
+  --sh-card:0 28px 56px -20px rgba(0,0,0,.9),0 0 0 1px var(--line);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:14px;
+  line-height:1.6;
+  padding:0 0 96px;
+  background-image:radial-gradient(900px 420px at 18% -8%,rgba(255,154,90,.045),transparent 70%);
+  background-repeat:no-repeat;
+}
+::selection{background:rgba(255,154,90,.3);color:inherit}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+kbd{
+  font-family:var(--mono);font-size:10px;padding:2px 5px;border-radius:4px;
+  background:var(--surface-3);border:1px solid var(--line-2);color:var(--text-2);
+}
+
+/* ---------- 页头 ---------- */
+.page-head{
+  max-width:1280px;margin:0 auto;padding:64px 40px 40px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:48px;
+  border-bottom:1px solid var(--line);
+}
+.page-head .eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.page-head .eyebrow::before{content:"";width:18px;height:1px;background:var(--accent)}
+.page-head h1{font-size:30px;line-height:1.25;letter-spacing:-.02em;font-weight:600}
+.page-head h1 em{font-style:normal;color:#8C96A4}
+.page-head p{color:var(--text-2);font-size:13px;max-width:420px;line-height:1.75}
+.page-head .meta{display:flex;gap:28px;flex-shrink:0}
+.page-head .meta div{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.04em}
+.page-head .meta b{display:block;color:var(--text-2);font-family:var(--font);font-size:12px;margin-top:4px;letter-spacing:0}
+
+/* ---------- 场景骨架 ---------- */
+.scene{
+  max-width:1280px;margin:0 auto;padding:52px 40px 8px;
+  display:grid;grid-template-columns:250px minmax(0,1fr);gap:48px;
+  border-bottom:1px solid var(--line);
+}
+.scene:last-of-type{border-bottom:0}
+.scene-side{position:sticky;top:40px;align-self:start;padding-bottom:52px}
+.scene-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+.scene-head .idx{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.06em}
+.scene-head h2{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.scene-desc{font-size:12.5px;line-height:1.8;color:var(--text-2);margin-bottom:22px}
+.scene-tag{
+  display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  padding:2px 7px;border-radius:4px;border:1px solid var(--line-2);color:var(--text-3);
+  margin-bottom:16px;
+}
+.scene-tag.p2{color:var(--text-3);border-style:dashed}
+
+.steps{list-style:none;display:flex;flex-direction:column;gap:2px;margin-bottom:24px}
+.steps li{
+  display:flex;gap:10px;padding:9px 10px;border-radius:var(--r-sm);
+  cursor:pointer;transition:background .15s ease;border:1px solid transparent;
+}
+.steps li b{font-family:var(--mono);font-size:11px;color:var(--text-3);font-weight:400;flex-shrink:0;line-height:1.9}
+.steps li>span{display:block;font-size:12.5px;color:var(--text-2);line-height:1.9}
+.steps li span span{display:block;font-size:11px;color:var(--text-3);line-height:1.6}
+.steps li:hover{background:var(--surface-2)}
+.steps li.on{background:var(--surface-2);border-color:var(--line)}
+.steps li.on b,.steps li.on>span{color:var(--text)}
+.steps li.on b{color:var(--accent)}
+.hint{font-size:11.5px;color:var(--text-3);line-height:1.9;padding-top:16px;border-top:1px solid var(--line)}
+
+/* ---------- 舞台 ---------- */
+.stage{
+  position:relative;border-radius:var(--r-lg);padding:26px 26px 30px;
+  background:linear-gradient(180deg,#0D1016,#090B0E);
+  border:1px solid var(--line);margin-bottom:52px;
+  min-height:660px;
+  overflow:visible;
+}
+.stage::before{
+  content:"";position:absolute;inset:0;border-radius:var(--r-lg);pointer-events:none;
+  background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.028) 1px,transparent 0);
+  background-size:22px 22px;
+}
+.stage-tag{
+  position:absolute;top:-9px;left:22px;padding:0 8px;
+  background:var(--bg);font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-3);
+}
+
+/* ---------- 模拟外部窗口 ---------- */
+.win{
+  position:relative;border-radius:var(--r-md);overflow:hidden;
+  background:var(--surface-2);border:1px solid var(--line);
+  box-shadow:0 18px 40px -24px rgba(0,0,0,.9);
+}
+.win-bar{
+  display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;
+  background:var(--surface-3);border-bottom:1px solid var(--line);
+}
+.dots{display:flex;gap:6px;margin-right:4px}
+.dots i{width:9px;height:9px;border-radius:50%;background:#333B47}
+.dots i:nth-child(1){background:#4A3A38}
+.dots i:nth-child(2){background:#4A4436}
+.dots i:nth-child(3){background:#35463E}
+.win-title{font-size:11.5px;color:var(--text-2);font-family:var(--mono)}
+.win-badge{
+  margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  color:var(--text-3);border:1px solid var(--line-2);border-radius:4px;padding:1px 6px;
+}
+.win-body{padding:18px 20px 26px;font-family:var(--mono);font-size:12.5px;line-height:2.2}
+.code .row{display:flex;gap:16px;white-space:pre-wrap;word-break:break-word}
+.code .ln{width:18px;text-align:right;color:#3A424E;flex-shrink:0;user-select:none;font-size:11.5px}
+.code .txt{color:#B7C0CC}
+.code .k{color:#9FB4D0}
+.code .p{color:#5B6472}
+.code .s{color:#C9B98A}
+.code .c{color:#6E7887}
+.code .u{color:#B7C0CC}
+.tok{
+  border-radius:3px;padding:1px 1px;cursor:pointer;
+  transition:background .14s ease,box-shadow .14s ease;
+}
+.tok:hover{background:rgba(255,255,255,.055)}
+.tok.is-sel{
+  background:rgba(255,154,90,.2);
+  box-shadow:inset 0 -1.5px 0 var(--accent);
+  color:#FFE3D0;
+}
+
+/* ---------- 划词浮动按钮 ---------- */
+.sel-btn{
+  position:absolute;z-index:20;display:flex;align-items:center;gap:7px;
+  height:30px;padding:0 10px 0 9px;border-radius:999px;
+  background:var(--surface-3);border:1px solid var(--line-2);
+  box-shadow:0 10px 24px -8px rgba(0,0,0,.9);
+  font-size:12px;color:var(--text);white-space:nowrap;
+  opacity:0;transform:translateY(4px) scale(.96);pointer-events:none;
+  transition:opacity .16s ease,transform .16s cubic-bezier(.2,.8,.3,1),background .14s,border-color .14s;
+}
+.sel-btn.show{opacity:1;transform:none;pointer-events:auto}
+.sel-btn.no-anim{transition:none !important}
+.sel-btn:hover{background:#252B34;border-color:#3D4653}
+.sel-btn svg{width:13px;height:13px;stroke:var(--accent);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sel-btn .kb{
+  margin-left:2px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.05);
+  font-family:var(--mono);font-size:9.5px;color:var(--text-3);letter-spacing:.04em;
+}
+
+/* ---------- 翻译卡片 ---------- */
+.card{
+  position:absolute;z-index:30;width:min(384px,calc(100% - 30px));
+  background:#14181E;border:1px solid #2C343F;
+  border-radius:var(--r-lg);box-shadow:0 32px 64px -24px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.02);
+  opacity:0;transform:translateY(-6px);pointer-events:none;
+  transition:opacity .18s ease,transform .2s cubic-bezier(.2,.8,.3,1);
+  overflow:hidden;
+}
+.card.show{opacity:1;transform:none;pointer-events:auto}
+.card.no-anim{transition:none !important}
+.c-head{
+  display:flex;align-items:center;gap:8px;padding:11px 12px 11px 16px;
+  border-bottom:1px solid var(--line);
+}
+.lang{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-2)}
+.lang-pill{
+  padding:3px 8px;border-radius:5px;background:var(--surface-3);
+  border:1px solid var(--line);white-space:nowrap;
+}
+.lang-pill.target{color:var(--text);display:flex;align-items:center;gap:4px}
+.lang .arw{width:11px;height:11px;stroke:var(--text-3);fill:none;stroke-width:1.5}
+.c-tools{margin-left:auto;display:flex;gap:2px}
+.icon-btn{
+  width:26px;height:26px;border-radius:6px;display:grid;place-items:center;
+  transition:background .14s;
+}
+.icon-btn:hover{background:var(--surface-3)}
+.icon-btn svg{width:14px;height:14px;stroke:var(--text-3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn:hover svg{stroke:var(--text-2)}
+
+.c-body{padding:16px 16px 14px}
+.word-row{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+.word{font-size:21px;font-weight:600;letter-spacing:-.015em;line-height:1.3}
+.phon{font-family:var(--mono);font-size:11.5px;color:var(--text-3);letter-spacing:.02em;margin-top:3px}
+.word-row .icon-btn{width:24px;height:24px;margin-left:auto;margin-top:2px}
+.pos-row{display:flex;gap:6px;margin-bottom:12px}
+.pos{
+  font-size:10.5px;padding:1.5px 6px;border-radius:4px;
+  background:var(--accent-soft);color:var(--accent);letter-spacing:.02em;
+}
+.pos.alt{background:var(--surface-3);color:var(--text-3)}
+.def{font-size:13px;line-height:1.75;color:#CFD6DF;margin-bottom:16px}
+
+.block{margin-bottom:14px}
+.block:last-child{margin-bottom:0}
+.block h4{
+  font-size:10.5px;font-weight:500;letter-spacing:.04em;
+  color:#848E9C;margin-bottom:7px;
+}
+.pairs{list-style:none;display:flex;flex-direction:column;gap:5px}
+.pairs li{display:flex;align-items:baseline;gap:8px;font-size:12.5px;line-height:1.6}
+.pairs b{font-weight:400;color:#B9C6D6;font-family:var(--mono);font-size:11.5px}
+.pairs span{color:var(--text-3);font-size:11.5px}
+.eg{font-size:12.5px;line-height:1.8;color:#C6CEDA;font-style:italic}
+.eg span{display:block;font-style:normal;color:#8D98A8;font-size:11.5px;margin-top:2px}
+
+.c-foot{
+  display:flex;align-items:center;gap:4px;padding:10px 12px;
+  border-top:1px solid var(--line);background:rgba(255,255,255,.012);
+}
+.foot-left{display:flex;gap:2px}
+.btn-add{
+  margin-left:auto;display:flex;align-items:center;gap:5px;
+  height:29px;padding:0 12px 0 10px;border-radius:7px;
+  background:var(--accent);color:#1A1206;font-size:12px;font-weight:600;
+  letter-spacing:.01em;transition:filter .14s,background .14s;
+}
+.btn-add:hover{filter:brightness(1.08)}
+.btn-add svg{width:12px;height:12px;stroke:#1A1206;fill:none;stroke-width:2.2;stroke-linecap:round}
+.btn-add.done{background:var(--mint-soft);color:var(--mint);box-shadow:inset 0 0 0 1px rgba(94,224,176,.3)}
+.btn-add.done svg{stroke:var(--mint)}
+.btn-add.done:hover{filter:none;background:rgba(94,224,176,.18)}
+
+.toast{
+  display:none;align-items:center;gap:7px;
+  padding:7px 16px;
+  background:rgba(94,224,176,.07);
+  border-bottom:1px solid rgba(94,224,176,.16);
+  font-size:11px;color:var(--mint);
+}
+.toast.show{display:flex}
+.toast b{font-weight:500;color:#A7F3D6}
+
+/* 骨架屏 */
+.sk{padding:16px}
+.sk .bar{
+  height:10px;border-radius:4px;margin-bottom:9px;
+  background:linear-gradient(90deg,#1A2028 25%,#232A34 50%,#1A2028 75%);
+  background-size:200% 100%;animation:sh 1.3s linear infinite;
+}
+.sk .bar.h{height:18px;width:44%;margin-bottom:14px}
+.sk .bar.s{width:62%}
+.sk .bar.xs{width:38%}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* ---------- 通用窗口（生词表 / 复习 / 设置） ---------- */
+.panel{
+  border-radius:var(--r-md);overflow:hidden;background:var(--surface);
+  border:1px solid var(--line);box-shadow:0 24px 48px -28px rgba(0,0,0,.9);
+}
+.panel-bar{
+  display:flex;align-items:center;gap:10px;height:40px;padding:0 14px;
+  background:var(--surface-2);border-bottom:1px solid var(--line);
+}
+.panel-bar .title{font-size:12px;color:var(--text-2);letter-spacing:.01em}
+.panel-bar .title b{color:var(--text);font-weight:600}
+.panel-bar .toolbar{margin-left:auto;display:flex;gap:6px;align-items:center}
+
+/* 生词表 */
+.wl-top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.search{
+  flex:1;display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;
+  border-radius:7px;background:var(--surface-2);border:1px solid var(--line);
+}
+.search svg{width:13px;height:13px;stroke:var(--text-3);fill:none;stroke-width:1.7;stroke-linecap:round}
+.search span{font-size:12px;color:var(--text-3)}
+.tabs{display:flex;gap:2px;padding:2px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line)}
+.tabs button{
+  padding:4px 10px;border-radius:5px;font-size:11.5px;color:var(--text-3);transition:.14s;
+}
+.tabs button.on{background:var(--surface-3);color:var(--text);box-shadow:0 1px 0 rgba(255,255,255,.03)}
+.tabs button i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px}
+.tabs button.on i{color:var(--accent)}
+
+.wlist{display:flex;flex-direction:column}
+.wrow{
+  display:flex;align-items:center;gap:16px;padding:12px 16px;
+  border-bottom:1px solid var(--line);transition:background .14s;
+}
+.wrow:hover{background:var(--surface-2)}
+.wrow:last-child{border-bottom:0}
+.wmain{min-width:0;flex:1}
+.wtop{display:flex;align-items:baseline;gap:8px}
+.wtop .w{font-size:13.5px;font-weight:600;font-family:var(--mono);letter-spacing:-.01em}
+.wtop .ph{font-family:var(--mono);font-size:10.5px;color:var(--text-3)}
+.wtop .wpos{font-size:10px;color:var(--accent);background:var(--accent-soft);padding:0 5px;border-radius:3px;line-height:1.6}
+.wctx{
+  font-size:11px;color:#7C8694;margin-top:3px;line-height:1.5;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);
+}
+.lvl{display:flex;gap:4px;flex-shrink:0}
+.lvl i{width:6px;height:6px;border-radius:50%;background:#2C343F}
+.lvl i.on{background:var(--mint)}
+.lvl i.mid{background:var(--accent)}
+.wtime{font-family:var(--mono);font-size:10.5px;color:var(--text-3);width:52px;text-align:right;flex-shrink:0}
+.wl-foot{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border-top:1px solid var(--line);background:var(--surface-2);
+}
+.wl-foot .sum{font-size:11.5px;color:var(--text-3)}
+.wl-foot .sum b{color:var(--text);font-weight:600}
+.wl-foot .sum i{font-style:normal;color:var(--mint)}
+.btn-primary{
+  margin-left:auto;display:flex;align-items:center;gap:6px;height:30px;padding:0 14px;
+  border-radius:7px;background:var(--accent);color:#1A1206;font-size:12px;font-weight:600;
+  transition:filter .14s;
+}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-primary svg{width:12px;height:12px;stroke:#1A1206;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* 复习考试 */
+.exam{padding:0}
+.prog{height:2px;background:var(--line);position:relative}
+.prog i{position:absolute;left:0;top:0;height:100%;width:37.5%;background:var(--accent)}
+.exam-head{display:flex;align-items:center;gap:12px;padding:16px 20px 0}
+.exam-head .num{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.04em}
+.exam-head .num b{color:var(--text);font-weight:600}
+.exam-switch{margin-left:auto;display:flex;gap:2px;padding:2px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
+.exam-switch button{padding:3px 9px;border-radius:4px;font-size:10.5px;color:var(--text-3);transition:.14s}
+.exam-switch button.on{background:var(--surface-3);color:var(--text)}
+
+.exam-body{padding:18px 20px 20px}
+.ask{font-size:11.5px;color:var(--text-3);margin-bottom:12px;letter-spacing:.01em}
+.sentence{
+  font-size:15px;line-height:1.85;color:#D6DDE7;padding:16px 18px;
+  background:var(--surface-2);border-radius:var(--r-sm);
+  border-left:2px solid var(--accent-line);margin-bottom:18px;
+  font-family:var(--mono);font-size:13.5px;
+}
+.sentence mark{background:rgba(255,154,90,.18);color:#FFD4B4;padding:1px 3px;border-radius:3px}
+.sentence .zh{display:block;font-family:var(--font);font-size:12px;color:var(--text-3);margin-top:8px}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{
+  display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface-2);
+  font-size:13px;color:#C1CAD6;text-align:left;transition:.14s;width:100%;
+}
+.opt:hover{border-color:var(--line-2);background:var(--surface-3)}
+.opt .k{
+  width:19px;height:19px;border-radius:5px;flex-shrink:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:10.5px;color:var(--text-3);
+  border:1px solid var(--line-2);background:var(--bg);
+}
+.opt.picked{border-color:var(--accent-line);background:var(--accent-soft);color:#FFE3D0}
+.opt.picked .k{background:var(--accent);color:#1A1206;border-color:transparent}
+.opt.wrong{border-color:rgba(255,122,107,.4);background:var(--danger-soft);color:#FFC4BD}
+.opt.wrong .k{background:var(--danger);color:#1A0E0C;border-color:transparent}
+.opt.right{border-color:rgba(94,224,176,.4);background:var(--mint-soft);color:#B6F2DA}
+.opt.right .k{background:var(--mint);color:#06201A;border-color:transparent}
+
+.explain{
+  margin-top:14px;padding:14px 15px;border-radius:8px;
+  background:var(--surface-2);border:1px solid var(--line);
+}
+.explain.hide{display:none}
+.explain .eh{
+  display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--mint);
+  margin-bottom:9px;letter-spacing:.02em;
+}
+.explain .eh svg{width:12px;height:12px;stroke:var(--mint);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.explain .eh em{margin-left:auto;font-style:normal;font-size:10.5px;color:var(--text-3);letter-spacing:.02em}
+.explain p{font-size:12.5px;line-height:1.8;color:#B9C3D0}
+.explain p+p{margin-top:8px}
+.explain .why{color:var(--text-3);font-size:11.5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.explain .why b{color:var(--text-2);font-weight:500}
+
+.exam-foot{
+  display:flex;align-items:center;gap:14px;padding:13px 20px;
+  border-top:1px solid var(--line);background:var(--surface-2);
+}
+.dots-prog{display:flex;gap:4px}
+.dots-prog i{width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.dots-prog i.ok{background:var(--mint)}
+.dots-prog i.bad{background:var(--danger)}
+.dots-prog i.now{background:var(--accent);box-shadow:0 0 0 3px rgba(255,154,90,.16)}
+.exam-foot .lbl{font-size:11px;color:var(--text-3);font-family:var(--mono)}
+
+/* 设置 */
+.set-body{padding:6px 0}
+.set-group{padding:12px 18px;border-bottom:1px solid var(--line)}
+.set-group:last-child{border-bottom:0}
+.set-group .gh{
+  font-size:10.5px;letter-spacing:.04em;color:#848E9C;
+  margin-bottom:10px;
+}
+.set-row{display:flex;align-items:center;gap:14px;padding:8px 0}
+.set-row .lb{font-size:12.5px;color:#C1CAD6;flex:1}
+.set-row .lb i{display:block;font-style:normal;font-size:10.5px;color:var(--text-3);margin-top:2px}
+.switch{
+  width:34px;height:19px;border-radius:999px;background:#2E3641;
+  position:relative;transition:.18s;flex-shrink:0;
+}
+.switch::after{
+  content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
+  background:#7C8694;transition:.18s;
+}
+.switch.on{background:rgba(255,154,90,.55)}
+.switch.on::after{left:17px;background:var(--accent)}
+.sel{
+  display:flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;
+  background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;color:#C1CAD6;
+}
+.sel svg{width:10px;height:10px;stroke:var(--text-3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.keycord{
+  font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:5px;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--text-2);
+}
+
+/* 页脚 */
+.page-foot{
+  max-width:1280px;margin:0 auto;padding:56px 40px 0;
+  display:flex;gap:48px;align-items:flex-start;flex-wrap:wrap;
+}
+.page-foot .col{flex:1;min-width:220px}
+.page-foot h5{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);
+  margin-bottom:12px;font-weight:500;
+}
+.page-foot p,.page-foot li{font-size:12px;line-height:1.9;color:var(--text-2)}
+.page-foot ul{list-style:none}
+.page-foot li::before{content:"— ";color:var(--text-3)}
+
+@media (max-width:1100px){
+  .page-head{flex-direction:column;align-items:flex-start;gap:28px}
+  .scene{grid-template-columns:1fr;gap:24px}
+  .scene-side{position:static;padding-bottom:0}
+  .page-head,.scene,.page-foot{padding-left:20px;padding-right:20px}
+  .stage{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div>
+    <div class="eyebrow">Product Prototype · v0.1</div>
+    <h1>划词即译 <em>/ 选中即懂，顺手成词</em></h1>
+  </div>
+  <div class="meta">
+    <div>平台<b>Tauri · Windows</b></div>
+    <div>交互<b>全局划词浮层</b></div>
+    <div>形态<b>常驻托盘 · 无主窗口</b></div>
+  </div>
+</header>
+
+<!-- ============ 01 划词翻译 ============ -->
+<section class="scene" id="s1">
+  <aside class="scene-side">
+    <div class="scene-head"><span class="idx">01</span><h2>划词翻译</h2></div>
+    <p class="scene-desc">在任意窗口选中文本，选区正上方浮出翻译入口；点击后释义贴在选区下方展开。<b>不遮挡原文、不抢焦点、不需要切窗口。</b></p>
+
+    <ol class="steps" id="steps">
+      <li class="on" data-s="select"><b>01</b><span>选中文本<span>浮动入口出现在选区上方 8px</span></span></li>
+      <li data-s="card"><b>02</b><span>展开释义<span>卡片对齐选区左沿，向下展开</span></span></li>
+      <li data-s="saved"><b>03</b><span>加入生词表<span>主按钮就地切换，进入复习队列</span></span></li>
+    </ol>
+
+    <p class="hint">可以直接在右侧用鼠标划选任意文字，或点击任意英文单词。快捷键 <kbd>Alt</kbd> <kbd>D</kbd> 重复翻译上一次选区。</p>
+  </aside>
+
+  <div class="stage" id="stage">
+    <div class="stage-tag">任意应用窗口 · 示意</div>
+
+    <div class="win">
+      <div class="win-bar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <span class="win-title">agent.config.yaml</span>
+        <span class="win-badge">YAML</span>
+      </div>
+      <div class="win-body">
+        <div class="code" id="code">
+          <div class="row"><span class="ln">1</span><span class="txt"><span class="k">name</span><span class="p">:</span> daily-digest-agent</span></div>
+          <div class="row"><span class="ln">2</span><span class="txt"><span class="k">description</span><span class="p">:</span> <span class="tok">Organize</span> text files into a <span class="tok">daily</span> information <span class="tok">report</span>.</span></div>
+          <div class="row"><span class="ln">3</span><span class="txt"><span class="k">model</span><span class="p">:</span> <span class="s">deepseek-chat</span></span></div>
+          <div class="row"><span class="ln">4</span><span class="txt"><span class="k">tools</span><span class="p">:</span></span></div>
+          <div class="row"><span class="ln">5</span><span class="txt">  <span class="p">-</span> read_file</span></div>
+          <div class="row"><span class="ln">6</span><span class="txt">  <span class="p">-</span> write_file</span></div>
+          <div class="row"><span class="ln">7</span><span class="txt">  <span class="p">-</span> search_web</span></div>
+          <div class="row"><span class="ln">8</span><span class="txt"><span class="k">schedule</span><span class="p">:</span> <span class="s">"0 8 * * *"</span> <span class="c"># 每天早上 8 点</span></span></div>
+          <div class="row"><span class="ln">9</span><span class="txt"><span class="k">output</span><span class="p">:</span> ./reports/{date}.md</span></div>
+          <div class="row"><span class="ln">10</span><span class="txt"><span class="k">constraints</span><span class="p">:</span></span></div>
+          <div class="row"><span class="ln">11</span><span class="txt">  <span class="p">-</span> 不要编造未出现在原文中的数字</span></div>
+          <div class="row"><span class="ln">12</span><span class="txt">  <span class="p">-</span> 摘要控制在 300 字以内</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 浮动入口 -->
+    <button class="sel-btn" id="selBtn">
+      <svg viewBox="0 0 24 24"><path d="M4 7h9.5L11 4.5M20 17h-9.5L13 19.5"/></svg>
+      <span>翻译</span>
+      <span class="kb">Alt D</span>
+    </button>
+
+    <!-- 翻译卡片 -->
+    <div class="card" id="card">
+      <div class="sk" id="sk">
+        <div class="bar h"></div>
+        <div class="bar"></div>
+        <div class="bar s"></div>
+        <div class="bar xs"></div>
+        <div class="bar"></div>
+        <div class="bar s"></div>
+      </div>
+
+      <div id="cardReal" style="display:none">
+        <div class="c-head">
+          <div class="lang">
+            <span class="lang-pill">自动检测</span>
+            <svg class="arw" viewBox="0 0 24 24"><path d="M4 12h15M14 7l5 5-5 5"/></svg>
+            <span class="lang-pill target">中文（简体）
+              <svg viewBox="0 0 24 24" style="width:9px;height:9px;stroke:var(--text-3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </div>
+          <div class="c-tools">
+            <button class="icon-btn" title="固定在屏幕上">
+              <svg viewBox="0 0 24 24"><path d="M12 17v5M9 3h6l-1 7 3 3v2H7v-2l3-3-1-7z"/></svg>
+            </button>
+            <button class="icon-btn" title="关闭" id="btnClose">
+              <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="toast" id="toast">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:var(--mint);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><path d="M4 12.5l5 5L20 6.5"/></svg>
+          <span>已加入生词表 · 今日待复习 <b>12 → 13</b></span>
+        </div>
+
+        <div class="c-body">
+          <div class="word-row">
+            <h3 class="word">Organize</h3>
+            <span class="phon">/ˈɔːrɡənaɪz/</span>
+            <button class="icon-btn" title="发音">
+              <svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4V5zM16 9a4 4 0 010 6M19 6a8 8 0 010 12"/></svg>
+            </button>
+          </div>
+          <div class="pos-row">
+            <span class="pos">动词 v.</span>
+            <span class="pos alt">及物</span>
+          </div>
+          <p class="def">整理、组织、安排 —— 把零散的事物归拢成一个有序的整体，或筹划某项活动。</p>
+
+          <div class="block">
+            <h4>常见搭配</h4>
+            <ul class="pairs">
+              <li><b>organize files</b><span>整理文件</span></li>
+              <li><b>organize a meeting</b><span>组织会议</span></li>
+            </ul>
+          </div>
+
+          <div class="block">
+            <h4>例句</h4>
+            <p class="eg">Please organize text files into a daily information report.
+              <span>请把文本文件整理成一份每日信息报告。</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="c-foot">
+          <div class="foot-left">
+            <button class="icon-btn" title="朗读">
+              <svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4V5zM16 9a4 4 0 010 6"/></svg>
+            </button>
+            <button class="icon-btn" title="复制">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h8"/></svg>
+            </button>
+            <button class="icon-btn" title="重新生成">
+              <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg>
+            </button>
+          </div>
+          <button class="btn-add" id="btnAdd">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            <span id="btnAddTxt">加入生词表</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 生词表 ============ -->
+<section class="scene" id="s2">
+  <aside class="scene-side">
+    <div class="scene-head"><span class="idx">02</span><h2>生词表</h2></div>
+    <p class="scene-desc">存下来的词不是死列表。每条都带着<b>你当时遇到它的那句原文</b>，复习时看的正是自己的语境。</p>
+    <p class="hint">熟悉度按遗忘曲线自动衰减：绿色实心表示已稳固，橙色表示即将到期。</p>
+  </aside>
+
+  <div class="stage" style="min-height:auto">
+    <div class="stage-tag">应用主窗口</div>
+
+    <div class="panel">
+      <div class="panel-bar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <span class="title"><b>生词表</b> · 24 个单词</span>
+        <div class="toolbar">
+          <button class="icon-btn" title="导出">
+            <svg viewBox="0 0 24 24"><path d="M12 3v11M8 10l4 4 4-4M4 18v2h16v-2"/></svg>
+          </button>
+          <button class="icon-btn" title="设置">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="wl-top">
+        <div class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+          <span>搜索单词、释义或原文语境…</span>
+        </div>
+        <div class="tabs">
+          <button class="on">全部<i>24</i></button>
+          <button>待复习<i>8</i></button>
+          <button>已掌握<i>16</i></button>
+        </div>
+      </div>
+
+      <div class="wlist">
+        <div class="wrow">
+          <div class="wmain">
+            <div class="wtop"><span class="w">organize</span><span class="ph">/ˈɔːrɡənaɪz/</span><span class="wpos">v.</span></div>
+            <div class="wctx">description: Organize text files into a daily information report.</div>
+          </div>
+          <div class="lvl"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+          <div class="wtime">刚刚</div>
+        </div>
+
+        <div class="wrow">
+          <div class="wmain">
+            <div class="wtop"><span class="w">resilient</span><span class="ph">/rɪˈzɪliənt/</span><span class="wpos">adj.</span></div>
+            <div class="wctx">A resilient system degrades gracefully under load.</div>
+          </div>
+          <div class="lvl"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="wtime">今天</div>
+        </div>
+
+        <div class="wrow">
+          <div class="wmain">
+            <div class="wtop"><span class="w">idempotent</span><span class="ph">/ˌaɪdəmˈpoʊtnt/</span><span class="wpos">adj.</span></div>
+            <div class="wctx">Make the retry idempotent so duplicates are harmless.</div>
+          </div>
+          <div class="lvl"><i class="on"></i><i class="mid"></i><i></i><i></i><i></i></div>
+          <div class="wtime">2 天前</div>
+        </div>
+
+        <div class="wrow">
+          <div class="wmain">
+            <div class="wtop"><span class="w">leverage</span><span class="ph">/ˈlevərɪdʒ/</span><span class="wpos">v.</span></div>
+            <div class="wctx">We leverage the cache to cut latency by half.</div>
+          </div>
+          <div class="lvl"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+          <div class="wtime">5 天前</div>
+        </div>
+
+        <div class="wrow">
+          <div class="wmain">
+            <div class="wtop"><span class="w">threshold</span><span class="ph">/ˈθreʃhoʊld/</span><span class="wpos">n.</span></div>
+            <div class="wctx">Alert when the error rate crosses the threshold.</div>
+          </div>
+          <div class="lvl"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <div class="wtime">8 天前</div>
+        </div>
+      </div>
+
+      <div class="wl-foot">
+        <span class="sum">今日待复习 <b>8</b> 个 · 连续复习 <i>6</i> 天</span>
+        <button class="btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M5 12h13M13 7l5 5-5 5"/></svg>
+          开始复习
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 AI 复习 ============ -->
+<section class="scene" id="s3">
+  <aside class="scene-side">
+    <div class="scene-head"><span class="idx">03</span><h2>AI 出题复习</h2></div>
+    <p class="scene-desc">AI 从你的生词表里挑词，<b>现场造一个你专业语境里的新句子</b>（不是背词典例句），让你判断词在这里的意思。</p>
+    <p class="hint">答错不扣分，直接展开解析并把该词推回队列前部。</p>
+  </aside>
+
+  <div class="stage" style="min-height:auto">
+    <div class="stage-tag">应用主窗口 · 复习模式</div>
+
+    <div class="panel">
+      <div class="prog"><i></i></div>
+
+      <div class="panel-bar" style="background:transparent;border-bottom:0">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <span class="title"><b>复习</b> · 第 3 / 8 题</span>
+        <div class="exam-switch">
+          <button class="on" data-tab="answer">答题中</button>
+          <button data-tab="feedback">答错解析</button>
+        </div>
+      </div>
+
+      <div class="exam-body">
+        <p class="ask">选出划线词在这个句子里的意思</p>
+
+        <div class="sentence">
+          Long-running jobs must be <mark>idempotent</mark>, otherwise a retry
+          after a timeout will write the same record twice.
+          <span class="zh">长耗时任务必须满足“可重复执行而结果不变”，否则超时重试会把同一条记录写两遍。</span>
+        </div>
+
+        <div class="opts">
+          <button class="opt" id="optA"><span class="k">A</span>空闲的，没有任务的</button>
+          <button class="opt" id="optB"><span class="k">B</span>可重复执行、结果不变的</button>
+          <button class="opt"><span class="k">C</span>可以并行拆分的</button>
+          <button class="opt"><span class="k">D</span>对外部依赖敏感的</button>
+        </div>
+
+        <div class="explain hide" id="explain">
+          <div class="eh">
+            <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3l9-16zM12 10v4M12 17h.01"/></svg>
+            <span>AI 解析 · 这个词你在 2 天前存过</span>
+            <em>你选了 A</em>
+          </div>
+          <p>「idempotent」在工程语境里指<b>同一操作执行一次和执行多次，结果相同</b>。关键不在“重复”，而在“结果不变”——所以和「可并行」「空闲」都没有关系。</p>
+          <p>对比记忆：<b>idempotent ≠ retry-safe</b>。前者说的是结果，后者说的是重试机制本身是否安全。</p>
+          <div class="why">你当时存的原文：<b>Make the retry idempotent so duplicates are harmless.</b></div>
+        </div>
+      </div>
+
+      <div class="exam-foot">
+        <div class="dots-prog">
+          <i class="ok"></i><i class="ok"></i><i class="now"></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <span class="lbl">正确率 2 / 2</span>
+        <button class="btn-primary">
+          下一题
+          <svg viewBox="0 0 24 24" style="margin-left:2px"><path d="M5 12h13M13 7l5 5-5 5"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 设置 ============ -->
+<section class="scene" id="s4">
+  <aside class="scene-side">
+    <div class="scene-head"><span class="idx">04</span><h2>偏好设置</h2></div>
+    <span class="scene-tag p2">P2 · 建议纳入 MVP</span>
+    <p class="scene-desc">划词翻译最怕“烦人”。触发方式、冷却、屏蔽应用，这些开关决定用户三天后还留不留它。</p>
+    <p class="hint">引擎可选：云 API（质量好、要 key）或本地 Ollama（离线、免费、慢一点）。</p>
+  </aside>
+
+  <div class="stage" style="min-height:auto;display:flex;justify-content:center">
+    <div class="stage-tag">应用主窗口 · 设置</div>
+
+    <div class="panel" style="width:100%;max-width:520px">
+      <div class="panel-bar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <span class="title"><b>偏好设置</b></span>
+      </div>
+
+      <div class="set-body">
+        <div class="set-group">
+          <div class="gh">触发</div>
+          <div class="set-row">
+            <div class="lb">选中文本后自动浮出<i>关闭则只能通过快捷键唤出</i></div>
+            <div class="switch on"></div>
+          </div>
+          <div class="set-row">
+            <div class="lb">唤出快捷键</div>
+            <span class="keycord">Alt + D</span>
+          </div>
+          <div class="set-row">
+            <div class="lb">冷却时间<i>上次翻译后多久内不重复弹出</i></div>
+            <span class="sel">1.5 秒
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="set-group">
+          <div class="gh">翻译</div>
+          <div class="set-row">
+            <div class="lb">翻译引擎</div>
+            <span class="sel">DeepSeek · 云端
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </div>
+          <div class="set-row">
+            <div class="lb">默认目标语言</div>
+            <span class="sel">中文（简体）
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="set-group">
+          <div class="gh">复习</div>
+          <div class="set-row">
+            <div class="lb">每日复习上限</div>
+            <span class="sel">20 个
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </div>
+          <div class="set-row">
+            <div class="lb">每天定时提醒<i>托盘气泡，不打断当前操作</i></div>
+            <div class="switch on"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="page-foot">
+  <div class="col">
+    <h5>已覆盖状态</h5>
+    <ul>
+      <li>划词 / 点击选词 / 键盘快捷键唤出</li>
+      <li>卡片加载骨架 → 内容 → 关闭</li>
+      <li>加入生词表 → 就地确认 + 队列计数反馈</li>
+      <li>复习答题 / 答错解析两种视图</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h5>待你确认</h5>
+    <ul>
+      <li>翻译引擎用云端 API 还是本地 Ollama</li>
+      <li>生词表是否需要跨设备同步</li>
+      <li>只做英译中，还是中英双向</li>
+    </ul>
+  </div>
+  <div class="col">
+    <h5>技术前提</h5>
+    <ul>
+      <li>全局取词需要无障碍 / UIA 或模拟 Ctrl+C</li>
+      <li>浮层为独立无边框置顶窗口，非页面内 DOM</li>
+      <li>卡片高度随内容变化，需动态重算位置</li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var stage   = document.getElementById('stage');
+  var code    = document.getElementById('code');
+  var selBtn  = document.getElementById('selBtn');
+  var card    = document.getElementById('card');
+  var sk      = document.getElementById('sk');
+  var cardReal= document.getElementById('cardReal');
+  var toast   = document.getElementById('toast');
+  var btnAdd  = document.getElementById('btnAdd');
+  var btnAddTxt = document.getElementById('btnAddTxt');
+  var btnClose= document.getElementById('btnClose');
+  var steps   = document.getElementById('steps');
+
+  var PAD = 12;
+  var saved = false;
+  var loadingTimer = null;
+  var currentRect = null;
+
+  function stageRect(){ return stage.getBoundingClientRect(); }
+
+  function placeBtn(rect){
+    var sr = stageRect(), w = selBtn.offsetWidth, h = selBtn.offsetHeight;
+    var left = rect.left - sr.left + rect.width/2 - w/2;
+    var top  = rect.top  - sr.top  - h - 8;
+    left = Math.max(PAD, Math.min(left, sr.width - w - PAD));
+    if(top < PAD) top = rect.bottom - sr.top + 8;
+    selBtn.style.left = left + 'px';
+    selBtn.style.top  = top  + 'px';
+  }
+
+  function placeCard(rect){
+    var sr = stageRect(), w = card.offsetWidth;
+    /* 左沿对齐选区，与划词工具跟随光标的直觉一致 */
+    var left = rect.left - sr.left - 6;
+    left = Math.max(PAD, Math.min(left, sr.width - w - PAD));
+    var top = rect.bottom - sr.top + 10;
+    card.style.left = left + 'px';
+    card.style.top  = top  + 'px';
+  }
+
+  function clearSel(){
+    var olds = code.querySelectorAll('.tok.is-sel');
+    for(var i=0;i<olds.length;i++) olds[i].classList.remove('is-sel');
+  }
+
+  function setStep(name){
+    var items = steps.querySelectorAll('li');
+    for(var i=0;i<items.length;i++){
+      items[i].classList.toggle('on', items[i].dataset.s === name);
+    }
+  }
+
+  function showCard(instant){
+    if(!currentRect) return;
+    card.classList.add('show');
+    placeCard(currentRect);
+    selBtn.classList.remove('show');
+    setStep('card');
+
+    if(instant){
+      sk.style.display='none'; cardReal.style.display='';
+      return;
+    }
+    sk.style.display=''; cardReal.style.display='none';
+    clearTimeout(loadingTimer);
+    loadingTimer = setTimeout(function(){
+      sk.style.display='none';
+      cardReal.style.display='';
+      placeCard(currentRect);
+    }, 720);
+  }
+
+  function hideCard(){
+    card.classList.remove('show');
+    toast.classList.remove('show');
+    clearTimeout(loadingTimer);
+  }
+
+  function resetSaved(){
+    saved = false;
+    btnAdd.classList.remove('done');
+    btnAddTxt.textContent = '加入生词表';
+    btnAdd.querySelector('svg').innerHTML = '<path d="M12 5v14M5 12h14"/>';
+    toast.classList.remove('show');
+  }
+
+  function doSelect(rect, el){
+    currentRect = rect;
+    placeBtn(rect);
+    selBtn.classList.add('show');
+    hideCard();
+    setStep('select');
+    if(el){
+      clearSel();
+      el.classList.add('is-sel');
+    }
+  }
+
+  /* --- 点击词 --- */
+  code.addEventListener('click', function(e){
+    var t = e.target.closest('.tok');
+    if(!t) return;
+    doSelect(t.getBoundingClientRect(), t);
+  });
+
+  /* --- 真实划选 --- */
+  stage.addEventListener('mouseup', function(e){
+    if(e.target.closest('.card') || e.target.closest('.sel-btn')) return;
+    setTimeout(function(){
+      var s = window.getSelection();
+      if(!s || s.isCollapsed || !s.toString().trim()) return;
+      var range = s.getRangeAt(0);
+      if(!code.contains(range.commonAncestorContainer)) return;
+      var r = range.getBoundingClientRect();
+      if(r.width < 2) return;
+      clearSel();
+      doSelect(r, null);
+    }, 10);
+  });
+
+  /* --- 点浮动按钮 --- */
+  selBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    showCard(false);
+  });
+
+  /* --- 加入生词表 --- */
+  btnAdd.addEventListener('click', function(){
+    if(saved) return;
+    saved = true;
+    btnAdd.classList.add('done');
+    btnAddTxt.textContent = '已加入生词表';
+    btnAdd.querySelector('svg').innerHTML = '<path d="M4 12.5l5 5L20 6.5"/>';
+    toast.classList.add('show');
+    setStep('saved');
+    setTimeout(function(){ toast.classList.remove('show'); }, 3200);
+  });
+
+  btnClose.addEventListener('click', function(){
+    hideCard();
+    resetSaved();
+    if(currentRect){
+      placeBtn(currentRect);
+      selBtn.classList.add('show');
+    }
+    setStep('select');
+  });
+
+  /* --- 步骤导航 --- */
+  steps.addEventListener('click', function(e){
+    var li = e.target.closest('li');
+    if(!li) return;
+    var s = li.dataset.s;
+    var el = code.querySelector('.tok');
+    if(el){
+      doSelect(el.getBoundingClientRect(), el);
+      if(s === 'card'){ showCard(true); }
+      if(s === 'saved'){
+        showCard(true);
+        resetSaved();
+        btnAdd.click();
+      }
+    }
+  });
+
+  /* --- 复习 tab --- */
+  var examSwitch = document.querySelector('.exam-switch');
+  if(examSwitch){
+    examSwitch.addEventListener('click', function(e){
+      var b = e.target.closest('button');
+      if(!b) return;
+      var tab = b.dataset.tab;
+      examSwitch.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      var explain = document.getElementById('explain');
+      var optA = document.getElementById('optA');
+      var optB = document.getElementById('optB');
+      if(tab === 'feedback'){
+        optA.classList.add('wrong');
+        optB.classList.add('right');
+        explain.classList.remove('hide');
+      }else{
+        optA.classList.remove('wrong');
+        optB.classList.remove('right');
+        explain.classList.add('hide');
+      }
+    });
+  }
+
+  /* 预览用：?feedback=1 直接呈现答错解析 */
+  if(location.search.indexOf('feedback') > -1){
+    var fb = document.querySelector('.exam-switch button[data-tab="feedback"]');
+    if(fb) fb.click();
+  }
+
+  /* --- 初始化：默认选中 Organize 并展开卡片 --- */
+  function boot(){
+    var first = code.querySelector('.tok');
+    if(first){
+      card.classList.add('no-anim');
+      selBtn.classList.add('no-anim');
+      doSelect(first.getBoundingClientRect(), first);
+      if(location.search.indexOf('selbtn') < 0) showCard(true);
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          card.classList.remove('no-anim');
+          selBtn.classList.remove('no-anim');
+        });
+      });
+      /* 预览用：?saved=1 直接呈现"已加入生词表"状态 */
+      if(location.search.indexOf('saved') > -1){
+        setTimeout(function(){ btnAdd.click(); }, 80);
+      }
+    }
+  }
+  if(document.readyState === 'complete') boot();
+  else window.addEventListener('load', boot);
+
+  window.addEventListener('resize', function(){
+    var sel = code.querySelector('.tok.is-sel');
+    if(sel) currentRect = sel.getBoundingClientRect();
+    if(currentRect){
+      placeBtn(currentRect);
+      if(card.classList.contains('show')){
+        placeCard(currentRect);
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

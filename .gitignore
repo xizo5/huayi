@@ -1,0 +1,28 @@
+# Rust 构建产物（几个 GB，绝对不要提交）
+/src-tauri/target/
+**/*.rs.bk
+
+# Tauri 生成的代码与 schema
+/src-tauri/gen/schemas/
+
+# 本地数据库
+*.db
+*.db-shm
+*.db-wal
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 日志
+*.log
+npm-debug.log*
+
+# 临时文件
+*.tmp
