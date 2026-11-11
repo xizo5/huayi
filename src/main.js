@@ -11,7 +11,7 @@ const esc = (s) =>
 
 const hl = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<mark>$1</mark>');
 
-let view = 'vocab';
+let view = 'translate';
 let searchTerm = '';
 let settingsCache = null;
 let hotkeyValue = '';
@@ -54,6 +54,7 @@ nav.addEventListener('click', (e) => {
 });
 
 async function render() {
+  if (view === 'translate') return renderTranslate();
   if (view === 'vocab') return renderVocab();
   if (view === 'review') return renderReview();
   return renderSettings();
@@ -74,6 +75,168 @@ async function refreshBadges() {
       kbd.textContent = cfg.hotkey_enabled ? cfg.hotkey || '未设置' : '已停用';
     }
   } catch (_) {}
+}
+
+// ---------------- 翻译 ----------------
+
+// 独立翻译页：不依赖划词、不依赖全局快捷键，永远不会因为被别的软件占用而失效
+let tInput = '';
+let tResult = null;
+let tLoading = false;
+let tError = '';
+let tSaved = false;
+
+function tCardHTML(t, saved) {
+  const collocations = (t.collocations || [])
+    .filter((c) => c.en)
+    .map((c) => `<li><b>${esc(c.en)}</b><span>${esc(c.zh)}</span></li>`)
+    .join('');
+
+  const example =
+    t.example && t.example.en
+      ? `<p class="eg">${esc(t.example.en)}<span>${esc(t.example.zh)}</span></p>`
+      : '<p class="eg" style="color:var(--text-4);font-style:normal">（这次没给例句）</p>';
+
+  return `
+    <div class="tcard fade-in">
+      <div class="tcard-head">
+        <h2>${esc(t.word)}</h2>
+        ${t.phonetic ? `<span class="tphon">${esc(t.phonetic)}</span>` : ''}
+        <button class="icon-btn" id="tSpeak" title="朗读">
+          <svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4V5zM16 9a4 4 0 010 6M19 6a8 8 0 010 12"/></svg>
+        </button>
+        <button class="btn-add ${saved ? 'done' : ''}" id="tAdd" style="margin-left:auto">
+          ${
+            saved
+              ? '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg><span>已在生词本</span>'
+              : '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>加入生词本</span>'
+          }
+        </button>
+      </div>
+
+      ${
+        t.pos
+          ? `<div class="pos-row"><span class="pos">${esc(t.pos)}</span></div>`
+          : '<div style="height:10px"></div>'
+      }
+
+      <p class="tdef">${esc(t.definition)}</p>
+
+      <div class="tcols">
+        <div class="block">
+          <h4>常见搭配</h4>
+          <ul class="pairs">${collocations || '<li style="color:var(--text-4);font-size:12px">—</li>'}</ul>
+        </div>
+        <div class="block">
+          <h4>例句</h4>
+          ${example}
+        </div>
+      </div>
+    </div>`;
+}
+
+async function renderTranslate() {
+  main.innerHTML = `
+    <div class="vhead">
+      <h1>翻译</h1>
+      <span class="sub">不依赖划词和全局快捷键，随时都能用</span>
+    </div>
+
+    <div class="tbox">
+      <textarea id="tinput" spellcheck="false"
+        placeholder="输入或粘贴英文，可以是单词、短语或整句…">${esc(tInput)}</textarea>
+      <div class="tbar">
+        <span class="thint"><kbd>Enter</kbd> 翻译 · <kbd>Shift</kbd> + <kbd>Enter</kbd> 换行</span>
+        <button class="btn-primary" id="tgo" style="margin-left:auto" ${tLoading ? 'disabled' : ''}>
+          ${tLoading ? '<span class="spinner" style="border-top-color:#1a1206"></span> 翻译中' : '翻译'}
+        </button>
+      </div>
+    </div>
+
+    <div id="tresult">
+      ${tError ? `<div class="test-result bad" style="display:block">${esc(tError)}</div>` : ''}
+      ${tResult ? tCardHTML(tResult, tSaved) : ''}
+    </div>
+  `;
+
+  const ta = document.getElementById('tinput');
+  if (ta) {
+    ta.addEventListener('input', () => {
+      tInput = ta.value;
+    });
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        runTranslatePage();
+      }
+    });
+    // 只有从别的页面切进来才抢焦点，避免翻译完打断输入
+    if (!tResult && !tLoading) {
+      ta.focus();
+    }
+  }
+
+  const go = document.getElementById('tgo');
+  if (go) go.onclick = runTranslatePage;
+
+  const add = document.getElementById('tAdd');
+  if (add && tResult) {
+    add.onclick = async () => {
+      if (tSaved) return;
+      add.disabled = true;
+      try {
+        await invoke('add_word', {
+          input: {
+            word: tResult.word,
+            phonetic: tResult.phonetic || '',
+            pos: tResult.pos || '',
+            definition: tResult.definition || '',
+            context: tInput.trim(),
+          },
+        });
+        tSaved = true;
+        refreshBadges();
+        renderTranslate();
+      } catch (e) {
+        add.disabled = false;
+        tError = String(e);
+        renderTranslate();
+      }
+    };
+  }
+
+  const speak = document.getElementById('tSpeak');
+  if (speak && tResult) {
+    speak.onclick = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(tResult.word);
+        u.lang = 'en-US';
+        u.rate = 0.9;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    };
+  }
+}
+
+async function runTranslatePage() {
+  const text = tInput.trim();
+  if (!text || tLoading) return;
+
+  tLoading = true;
+  tError = '';
+  await renderTranslate();
+
+  try {
+    const res = await invoke('translate', { text });
+    tResult = res.translation;
+    tSaved = res.saved;
+  } catch (e) {
+    tError = String(e);
+    tResult = null;
+  }
+  tLoading = false;
+  await renderTranslate();
 }
 
 // ---------------- 生词本 ----------------
