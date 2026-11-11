@@ -4,7 +4,15 @@
 
 Tauri 2 + 原生前端（零 npm 依赖）。Windows。
 
-## 跑起来
+## 安装（直接用）
+
+去 [Releases](../../releases) 下载 `Huayi_0.1.0_x64-setup.exe`，双击安装即可。
+
+不想安装的话，下载 `huayi.exe` 单文件版，放到任意目录直接运行。
+
+**环境要求**：Windows 10 / 11 x64，需要 WebView2 运行时（Win11 自带；Win10 通常也已预装，缺失时安装器会提示）。
+
+## 从源码跑
 
 ```bash
 cargo run --manifest-path src-tauri/Cargo.toml
